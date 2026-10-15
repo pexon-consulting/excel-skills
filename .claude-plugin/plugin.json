@@ -1,0 +1,24 @@
+{
+  "name": "excel-skills",
+  "description": "Claude Skills für Excel: sechs Agent Skills für Claude Code und Codex, die deutsche Excel-Dateien prüfen, bereinigen, vergleichen, zusammenführen und als DATEV-CSV exportieren, lokal und ohne das Original zu ändern.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Phillip Pham",
+    "url": "https://github.com/phampexon"
+  },
+  "homepage": "https://pexon-consulting.de/data-services/excel-risiken-audit-controlling/",
+  "repository": "https://github.com/pexon-consulting/excel-skills",
+  "license": "MIT",
+  "keywords": [
+    "claude-skills",
+    "agent-skills",
+    "excel",
+    "xlsx",
+    "excel-vergleichen",
+    "excel-bereinigen",
+    "datev",
+    "csv",
+    "sverweis",
+    "codex"
+  ]
+}

@@ -1,0 +1,30 @@
+[project]
+name = "excel-skills"
+version = "0.1.0"
+description = "Claude Skills für Excel: deutsche Excel-Dateien prüfen, bereinigen, vergleichen, zusammenführen und als DATEV-CSV exportieren, lokal und ohne das Original zu ändern."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Phillip Pham" }]
+keywords = ["claude-skills", "agent-skills", "excel", "xlsx", "datev", "csv", "openpyxl", "codex"]
+dependencies = ["openpyxl>=3.1,<4"]
+
+[project.urls]
+Homepage = "https://pexon-consulting.de/data-services/"
+Repository = "https://github.com/pexon-consulting/excel-skills"
+
+[project.scripts]
+excel-skills = "excel_skills.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

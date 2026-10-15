@@ -1,0 +1,40 @@
+{
+  "name": "excel-skills",
+  "description": "Claude Skills für Excel: sechs Agent Skills für Claude Code und Codex, die deutsche Excel-Dateien prüfen, bereinigen, vergleichen, zusammenführen und als DATEV-CSV exportieren, lokal und ohne das Original zu ändern.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Phillip Pham",
+    "url": "https://github.com/phampexon"
+  },
+  "homepage": "https://pexon-consulting.de/data-services/excel-risiken-audit-controlling/",
+  "repository": "https://github.com/pexon-consulting/excel-skills",
+  "license": "MIT",
+  "keywords": [
+    "claude-skills",
+    "agent-skills",
+    "excel",
+    "xlsx",
+    "excel-vergleichen",
+    "excel-bereinigen",
+    "datev",
+    "csv",
+    "sverweis",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Excel Skills",
+    "shortDescription": "Deutsche Excel-Dateien prüfen, bereinigen, vergleichen, zusammenführen und als DATEV-CSV exportieren",
+    "longDescription": "Claude Skills für Excel: sechs Agent Skills für Claude Code und Codex, die deutsche Excel-Dateien prüfen, bereinigen, vergleichen, zusammenführen und als DATEV-CSV exportieren, lokal und ohne das Original zu ändern.\n\nexcel-profil findet die Kopfzeile und sagt, ob ein Blatt Tabelle, Bericht oder Formular ist. excel-bereinigen schreibt eine Kopie ohne verbundene Zellen und Zwischensummen, mit echten Zahlen aus 1.234,56. excel-formeln findet #BEZUG!, SVERWEIS #NV und harte Werte. excel-vergleich vergleicht zwei Tabellen über eine Schlüsselspalte. excel-stapeln führt Dateien mit gleichen Spalten zusammen. excel-csv schreibt CSV für DATEV, deutsches Excel oder UTF-8. Makros laufen nie, nichts wird hochgeladen.",
+    "developerName": "Pexon Consulting GmbH",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://pexon-consulting.de/data-services/excel-risiken-audit-controlling/",
+    "privacyPolicyURL": "https://github.com/pexon-consulting/excel-skills/blob/main/PRIVACY.md",
+    "defaultPrompt": [
+      "Vergleiche preise_alt.xlsx und preise_neu.xlsx über die Artikelnummer.",
+      "Bereinige umsatz.xlsx als Kopie: Kopfzeile nach oben, Zwischensummen raus, deutsche Zahlen umwandeln.",
+      "Exportiere das Blatt Buchungen als CSV für den DATEV-Import."
+    ]
+  }
+}
