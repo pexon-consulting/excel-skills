@@ -1,8 +1,8 @@
-# 20 Beispiele: Claude Skills für Excel
+# Claude Skills für Excel: 20 Beispiele mit echter Ausgabe
 
 Jedes Beispiel ist ein Satz, wie man ihn Claude Code, Codex oder einem anderen Agenten schreibt. Darunter steht der Befehl, den das Skill ausführt, und die echte Ausgabe gegen die Testdateien in `fixtures/`. Diese Datei erzeugt `python3 scripts/beispiele_bauen.py`, ein Test prüft, dass sie aktuell ist.
 
-Vor jedem Befehl steht im Skill `uvx --from git+https://github.com/pexon-consulting/excel-skills@v0.1.0`.
+Vor jedem Befehl steht im Skill `uvx --from git+https://github.com/pexon-consulting/excel-skills@v0.1.1`.
 
 <a id="beispiel-1"></a>
 ## 1. Finde die Kopfzeile in dieser Excel, die erst in Zeile 4 anfängt.
@@ -96,7 +96,7 @@ Ergebnis: A5:A7 = Nord, A10:A11 = Süd
 ```
 
 <a id="beispiel-4"></a>
-## 4. Leere Zeilen und Zwischensummen aus der Liste löschen.
+## 4. Leere Zeilen und Zwischensummen aus der Excel-Liste löschen.
 
 ```bash
 excel-skills bereinigen fixtures/umsatz_bericht.xlsx --ohne kopfzeile,verbunden,zahlen,datum,trimmen --out kopie.xlsx
@@ -142,7 +142,7 @@ Ergebnis: Zeilen 8, 9, 12, 13 entfernt, Formeln angepasst
 ```
 
 <a id="beispiel-5"></a>
-## 5. Deutsche Zahlen 1.234,56 in echte Zahlen umwandeln.
+## 5. Text in Zahl umwandeln: deutsche Zahlen 1.234,56 in Excel.
 
 ```bash
 excel-skills bereinigen fixtures/umsatz_bericht.xlsx --ohne kopfzeile,verbunden,leerzeilen,summen,datum,trimmen --out kopie.xlsx
@@ -466,7 +466,7 @@ Ergebnis: neu K-1005, weg K-1003
 ```
 
 <a id="beispiel-14"></a>
-## 14. Zwölf Excel-Dateien zusammenführen, eine je Monat.
+## 14. Mehrere Excel-Dateien zusammenführen, eine je Monat.
 
 ```bash
 excel-skills stapeln fixtures/monate --out kopie.xlsx
@@ -545,7 +545,7 @@ Ergebnis: Abbruch mit Exit-Code 3: 2026-02.xlsx fehlt Betrag, hat Netto
 ```
 
 <a id="beispiel-16"></a>
-## 16. Excel als CSV für den DATEV-Import exportieren.
+## 16. Excel in CSV umwandeln für den DATEV-Import.
 
 ```bash
 excel-skills csv fixtures/buchungen.xlsx --format datev --out kopie.csv

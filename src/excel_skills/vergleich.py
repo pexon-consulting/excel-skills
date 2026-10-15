@@ -74,12 +74,9 @@ def nach_zellen(alt: laden.Tabelle, neu: laden.Tabelle) -> dict[str, Any]:
 def ausfuehren(alt_pfad: Path, neu_pfad: Path, blatt: str | None, schluessel: str | None, out: Path) -> dict[str, Any]:
     tabellen = []
     for p in (alt_pfad, neu_pfad):
-        wb, wv = laden.lade(p), laden.lade(p, werte=True)
+        wb, wv = laden.lade_beide(p)
         ws = laden.blatt(wb, blatt)
-        t = laden.tabelle(ws, wv[ws.title])
-        if t.kopf_zeile is None:
-            raise laden.Abbruch(f"{p.name}, Blatt {ws.title}: keine Kopfzeile gefunden ({t.begruendung}).", code=3)
-        tabellen.append(t)
+        tabellen.append(laden.tabelle_pflicht(ws, wv[ws.title], datei=p))
     alt, neu = tabellen
     spalten = {"nur_alt": [k for k in alt.kopf if k not in neu.kopf], "nur_neu": [k for k in neu.kopf if k not in alt.kopf]}
     if schluessel:

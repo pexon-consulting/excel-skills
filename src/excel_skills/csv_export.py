@@ -59,12 +59,10 @@ def ausfuehren(datei: Path, blatt: str | None, out: Path | None, fmt: str) -> di
         raise laden.Abbruch(f"--format kennt nur {', '.join(regeln.CSV_FORMATE)}")
     out = laden.pruefe_ausgabe(out, [datei], (".csv",))
     f = regeln.CSV_FORMATE[fmt]
-    wb, wv = laden.lade(datei), laden.lade(datei, werte=True)
+    wb, wv = laden.lade_beide(datei)
     ws = laden.blatt(wb, blatt)
     vs = wv[ws.title]
-    t = laden.tabelle(ws)
-    if t.kopf_zeile is None:
-        raise laden.Abbruch(f"Blatt {ws.title}: keine Kopfzeile gefunden ({t.begruendung}). Nichts geschrieben.", code=3)
+    t = laden.tabelle_pflicht(ws)
 
     hinweise: list[dict[str, Any]] = []
     nicht_kodierbar: list[dict[str, Any]] = []

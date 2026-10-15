@@ -14,6 +14,7 @@ from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from . import regeln
+from .regeln import ist_leer
 
 MAX_BYTES = 50 * 1024 * 1024
 MAX_ENTPACKT = 500 * 1024 * 1024
@@ -81,15 +82,29 @@ def schliessen(wb: Workbook) -> None:
         wb.vba_archive = None
 
 
+def lade_beide(pfad: Path) -> tuple[Workbook, Workbook]:
+    """Mappe mit Formeln und dieselbe Mappe mit den von Excel gespeicherten Ergebnissen."""
+    return lade(pfad), lade(pfad, werte=True)
+
+
+def ist_dieselbe(a: Path, b: Path) -> bool:
+    """Auch bei anderer Groß- und Kleinschreibung oder per Hardlink dieselbe Datei."""
+    if a.resolve() == b.resolve():
+        return True
+    try:
+        return a.exists() and b.exists() and a.samefile(b)
+    except OSError:
+        return False
+
+
 def pruefe_ausgabe(out: Path | None, eingaben: list[Path], endungen: tuple[str, ...]) -> Path:
     """--out ist Pflicht, hat die richtige Endung und ist keine Eingabedatei."""
     if out is None:
         raise Abbruch("--out fehlt. Das Original wird nie überschrieben, deshalb braucht jede Ausgabe einen eigenen Pfad.")
     if out.suffix.lower() not in endungen:
         raise Abbruch(f"--out muss auf {' oder '.join(endungen)} enden: {out}")
-    ziel = out.resolve()
     for e in eingaben:
-        if ziel == e.resolve():
+        if ist_dieselbe(out, e):
             raise Abbruch(f"--out ist die Eingabedatei {e}. Das Original wird nie überschrieben.")
     if out.exists() and out.is_dir():
         raise Abbruch(f"--out ist ein Ordner: {out}")
@@ -103,11 +118,15 @@ def begleitdatei(out: Path, name: str) -> Path:
 
 
 def blatt(wb: Workbook, name: str | None) -> Worksheet:
+    """Ein Tabellenblatt. Diagrammblätter zählen nicht."""
+    blaetter = {ws.title: ws for ws in wb.worksheets}
+    if not blaetter:
+        raise Abbruch("Die Mappe hat kein Tabellenblatt.")
     if name is None:
         return wb.worksheets[0]
-    if name not in wb.sheetnames:
-        raise Abbruch(f"Blatt {name!r} fehlt. Vorhanden: {', '.join(wb.sheetnames)}")
-    return wb[name]
+    if name not in blaetter:
+        raise Abbruch(f"Tabellenblatt {name!r} fehlt. Vorhanden: {', '.join(blaetter)}")
+    return blaetter[name]
 
 
 def ist_formel(zelle: Any) -> bool:
@@ -115,12 +134,12 @@ def ist_formel(zelle: Any) -> bool:
 
 
 def formeltext(zelle: Any) -> str:
+    """Formel als Text. Datentabellen aus der Was-wäre-wenn-Analyse haben keinen Formeltext."""
     v = zelle.value
-    return v if isinstance(v, str) else getattr(v, "text", str(v))
-
-
-def ist_leer(wert: Any) -> bool:
-    return wert is None or (isinstance(wert, str) and not wert.strip("\u00a0\u2009\u202f "))
+    if isinstance(v, str):
+        return v
+    text = getattr(v, "text", None)
+    return text if isinstance(text, str) else f"<{type(v).__name__}>"
 
 
 @dataclass
@@ -135,7 +154,7 @@ class Raster:
         return len(self.spalten_genutzt)
 
 
-def raster(ws: Worksheet) -> Raster:
+def lese_raster(ws: Worksheet) -> Raster:
     zeilen: list[list[tuple[Any, bool]]] = []
     genutzt: set[int] = set()
     for row in ws.iter_rows(min_row=1, max_row=ws.max_row, max_col=ws.max_column):
@@ -171,12 +190,21 @@ class Tabelle:
 def kopfname(wert: Any, spalte: int) -> str:
     if ist_leer(wert):
         return f"Spalte {get_column_letter(spalte)}"
-    return str(wert).strip("\u00a0\u2009\u202f ")
+    return str(wert).strip(regeln.LEER)
 
 
-def tabelle(ws: Worksheet, werte_ws: Worksheet | None = None) -> Tabelle:
+def tabelle_pflicht(ws: Worksheet, werte_ws: Worksheet | None = None, datei: Path | None = None) -> Tabelle:
+    """Wie tabelle(), bricht aber mit Exit-Code 3 ab, wenn keine Kopfzeile gefunden wird."""
+    t = tabelle(ws, werte_ws)
+    if t.kopf_zeile is None:
+        wo = f"{datei.name}, Blatt {ws.title}" if datei else f"Blatt {ws.title}"
+        raise Abbruch(f"{wo}: keine Kopfzeile gefunden ({t.begruendung}). Nichts geschrieben.", code=3)
+    return t
+
+
+def tabelle(ws: Worksheet, werte_ws: Worksheet | None = None, raster: Raster | None = None) -> Tabelle:
     """Liest die Tabelle ab der Kopfzeile. Formelzellen nehmen den gespeicherten Wert aus werte_ws, sonst den Formeltext."""
-    r = raster(ws)
+    r = raster or lese_raster(ws)
     if not r.spalten_genutzt:
         return Tabelle(ws.title, None, "Blatt ist leer", 1, 0, [])
     links, rechts = r.spalten_genutzt[0], r.spalten_genutzt[-1]

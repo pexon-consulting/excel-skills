@@ -8,8 +8,9 @@ import sys
 from conftest import ROOT
 
 EINZEILER = (
-    "Claude Skills für Excel: sechs Agent Skills für Claude Code und Codex, die deutsche Excel-Dateien prüfen, "
-    "bereinigen, vergleichen, zusammenführen und als DATEV-CSV exportieren, lokal und ohne das Original zu ändern."
+    "Claude Skills für Excel: sechs Agent Skills für Claude Code und Codex, die deutsche Excel-Dateien prüfen und bereinigen, "
+    "zwei Excel-Tabellen vergleichen, mehrere Excel-Dateien zusammenführen und in CSV für DATEV umwandeln, "
+    "lokal und ohne das Original zu ändern."
 )
 SKILLS = ("excel-bereinigen", "excel-csv", "excel-formeln", "excel-profil", "excel-stapeln", "excel-vergleich")
 
@@ -51,14 +52,14 @@ def test_skills():
         assert "<" not in fm["description"] and ">" not in fm["description"]
         assert "Claude Skills für Excel" in fm["description"]
         assert EINZEILER in text
-        assert "excel-skills@v0.1.0" in text
+        assert "excel-skills@v0.1.1" in text
 
 
 def test_versionen_gleich():
     from excel_skills import __version__
 
-    assert __version__ == "0.1.0"
-    assert 'version = "0.1.0"' in (ROOT / "pyproject.toml").read_text()
+    assert __version__ == "0.1.1"
+    assert 'version = "0.1.1"' in (ROOT / "pyproject.toml").read_text()
     for p in (".claude-plugin/plugin.json", ".codex-plugin/plugin.json"):
         assert json.loads((ROOT / p).read_text())["version"] == __version__
 

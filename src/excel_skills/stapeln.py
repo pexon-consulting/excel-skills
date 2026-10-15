@@ -16,10 +16,9 @@ QUELLSPALTE = "quelle_datei"
 def dateien(ordner: Path, out: Path) -> list[Path]:
     if not ordner.is_dir():
         raise laden.Abbruch(f"Ordner nicht gefunden: {ordner}")
-    ziel = out.resolve()
     liste = sorted(
         p for p in ordner.iterdir()
-        if p.is_file() and p.suffix.lower() in laden.ENDUNGEN and not p.name.startswith("~$") and p.resolve() != ziel
+        if p.is_file() and p.suffix.lower() in laden.ENDUNGEN and not p.name.startswith("~$") and not laden.ist_dieselbe(p, out)
     )
     if not liste:
         raise laden.Abbruch(f"Keine .xlsx oder .xlsm in {ordner}")
@@ -37,9 +36,7 @@ def ausfuehren(ordner: Path, blatt: str | None, out: Path | None, werte: bool) -
         wb = laden.lade(p)
         ws = laden.blatt(wb, blatt)
         wv = laden.lade(p, werte=True)[ws.title] if werte else None
-        t = laden.tabelle(ws)
-        if t.kopf_zeile is None:
-            raise laden.Abbruch(f"{p.name}, Blatt {ws.title}: keine Kopfzeile gefunden. Nichts geschrieben.", code=3)
+        t = laden.tabelle_pflicht(ws, datei=p)
         gelesen.append((p, ws, wv, t))
 
     basis = gelesen[0][3].kopf
@@ -87,6 +84,9 @@ def ausfuehren(ordner: Path, blatt: str | None, out: Path | None, werte: bool) -
                     elif "!" in text or "[" in text:
                         konflikte.append({"datei": p.name, "zelle": c.coordinate, "formel": text,
                                           "grund": "Formel verweist auf ein anderes Blatt oder eine andere Datei"})
+                    elif t.kopf != basis:
+                        konflikte.append({"datei": p.name, "zelle": c.coordinate, "formel": text,
+                                          "grund": "Spalten stehen in anderer Reihenfolge, die Bezüge der Formel würden falsch"})
                     else:
                         zelle.value = Translator(text, origin=c.coordinate).translate_formula(zelle.coordinate)
                 else:
@@ -98,7 +98,7 @@ def ausfuehren(ordner: Path, blatt: str | None, out: Path | None, werte: bool) -
         quellen.append({"datei": p.name, "blatt": ws.title, "kopfzeile": t.kopf_zeile, "zeilen": anzahl})
     if konflikte:
         raise laden.Abbruch(
-            "Formeln verweisen auf andere Blätter oder Dateien und lassen sich nicht mitnehmen. Nichts geschrieben. "
+            "Formeln lassen sich nicht sicher mitnehmen. Nichts geschrieben. "
             "Mit --werte werden die gespeicherten Ergebnisse übernommen.", code=3, details=konflikte,
         )
 

@@ -239,5 +239,5 @@ def test_markdown_bleibt_heil(lauf, tmp_path):
 
 def test_schema(lauf):
     code, erg = lauf("schema")
-    assert code == 0 and erg["version"] == "0.1.0"
+    assert code == 0 and erg["version"] == "0.1.1"
     assert erg["csv_formate"]["datev"]["kodierung"] == "cp1252"

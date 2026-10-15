@@ -1,7 +1,7 @@
 {
   "name": "excel-skills",
   "metadata": {
-    "description": "Claude Skills für Excel: sechs Agent Skills für Claude Code und Codex, die deutsche Excel-Dateien prüfen, bereinigen, vergleichen, zusammenführen und als DATEV-CSV exportieren, lokal und ohne das Original zu ändern."
+    "description": "Claude Skills für Excel: sechs Agent Skills für Claude Code und Codex, die deutsche Excel-Dateien prüfen und bereinigen, zwei Excel-Tabellen vergleichen, mehrere Excel-Dateien zusammenführen und in CSV für DATEV umwandeln, lokal und ohne das Original zu ändern."
   },
   "owner": {
     "name": "Phillip Pham"

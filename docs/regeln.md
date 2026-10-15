@@ -1,9 +1,13 @@
 # Regeln von Claude Skills für Excel
 
+Stand: v0.1.1 vom 15.10.2026. `excel-skills schema` liefert dieselben Werte als JSON.
+
 Jede Regel hat einen festen Anker. Die Werte stehen identisch in `src/excel_skills/regeln.py` und kommen maschinenlesbar aus `excel-skills schema`. Kein Sprachmodell trifft diese Entscheidungen, das Programm tut es, jedes Mal gleich.
 
 <a id="kopfzeile"></a>
-## Kopfzeile finden
+## Excel-Kopfzeile finden
+
+In Claude Skills für Excel findet `excel-profil` die Kopfzeile nach einer festen Regel, auch wenn darüber Titel, Datum oder Leerzeilen stehen.
 
 Die Kopfzeile ist die erste Zeile in den ersten 50 Zeilen, in der mindestens 60 Prozent der genutzten Spalten Text enthalten und deren Folgezeile mindestens eine Zahl, ein Datum, einen Wahrheitswert oder eine Formel hat. Passt keine Folgezeile, gilt die erste Zeile mit genug Text. Ein Titel wie „Umsatzbericht 2026“ in Zeile 1 füllt nur eine Spalte und ist deshalb keine Kopfzeile.
 
@@ -18,6 +22,8 @@ Die Kopfzeile ist die erste Zeile in den ersten 50 Zeilen, in der mindestens 60 
 <a id="tabelle-oder-bericht"></a>
 ## Tabelle, Bericht oder Formular
 
+In Claude Skills für Excel entscheidet `excel-profil` je Blatt, ob es eine Tabelle, ein Bericht oder ein Formular ist.
+
 | Urteil | Bedingung |
 |---|---|
 | `formular` | weniger als 3 Spalten mit Daten |
@@ -27,7 +33,9 @@ Die Kopfzeile ist die erste Zeile in den ersten 50 Zeilen, in der mindestens 60 
 Eine `tabelle` kann direkt nach Power BI, Microsoft Fabric oder in eine Datenbank. Ein `bericht` braucht vorher `excel-skills bereinigen`.
 
 <a id="deutsche-zahl"></a>
-## Deutsche Zahl, Text in Zahl umwandeln
+## Text in Zahl umwandeln: deutsche Zahl 1.234,56
+
+In Claude Skills für Excel wandelt `excel-bereinigen` deutsche Zahlen, die als Text in der Zelle stehen, nach dieser Tabelle in echte Zahlen um. Was mehrdeutig ist, bleibt Text und steht als Hinweis im Bericht.
 
 | Text in der Zelle | Ergebnis | Grund |
 |---|---|---|
@@ -43,6 +51,8 @@ Nur Zellen unterhalb der Kopfzeile werden umgewandelt. Formeln werden nie umgewa
 <a id="datum"></a>
 ## Datum als Text in Excel-Datum umwandeln
 
+In Claude Skills für Excel wandelt `excel-bereinigen` deutsche Datumsangaben, die als Text in der Zelle stehen, in ein echtes Excel-Datum um.
+
 | Text in der Zelle | Ergebnis |
 |---|---|
 | `31.12.2026` | Datum 31.12.2026, Format `TT.MM.JJJJ` |
@@ -51,12 +61,16 @@ Nur Zellen unterhalb der Kopfzeile werden umgewandelt. Formeln werden nie umgewa
 | `12/31/2026` | bleibt Text, Hinweis: Reihenfolge Tag und Monat unklar |
 
 <a id="summenzeile"></a>
-## Summenzeile und Zwischensumme
+## Zwischensummen und Summenzeilen erkennen
 
-Eine Zeile ist Summenzeile, wenn ihre erste Textzelle mit `Summe`, `Gesamt`, `Total` oder `Zwischensumme` beginnt, ohne Rücksicht auf Groß- und Kleinschreibung. Formeltexte zählen nicht als Textzelle. `bereinigen` entfernt Summenzeilen, `stapeln` überspringt sie, `csv` gibt sie mit Hinweis aus.
+In Claude Skills für Excel erkennen `profil`, `bereinigen`, `stapeln` und `csv` Summen- und Zwischensummenzeilen nach derselben Regel.
+
+Eine Zeile ist Summenzeile, wenn ihre erste Textzelle mit dem ganzen Wort `Summe`, `Gesamt`, `Gesamtsumme`, `Total` oder `Zwischensumme` beginnt, ohne Rücksicht auf Groß- und Kleinschreibung. „Summe Januar“ und „Gesamt:“ zählen, „Gesamtschule Nord“ oder „Totalbau GmbH“ nicht. Formeltexte zählen nicht als Textzelle. `bereinigen` entfernt Summenzeilen, `stapeln` überspringt sie, `csv` gibt sie mit Hinweis aus.
 
 <a id="formelspalte"></a>
 ## Formelspalte, harter Wert, Formel fehlt
+
+In Claude Skills für Excel prüft `excel-formeln` Spalten, die überwiegend aus Formeln bestehen, auf harte Werte, fehlende Formeln, Fehlerwerte und externe Verknüpfungen, ohne etwas zu ändern oder neu zu rechnen.
 
 Eine Spalte ist Formelspalte, wenn mindestens 80 Prozent ihrer gefüllten Datenzellen Formeln sind und es mindestens 2 Formeln gibt. Summenzeilen zählen nicht mit.
 
@@ -80,12 +94,16 @@ Fehlerwerte stehen in der Datei englisch. Der Bericht nennt beide Namen:
 | `#NULL!` | `#NULL!` | Bereiche ohne Schnittmenge |
 
 <a id="zeilen-loeschen"></a>
-## Zeilen löschen, ohne Formeln zu brechen
+## Leere Zeilen löschen, ohne Formeln zu brechen
 
-Wenn `bereinigen` Zeilen löscht, schreibt es jeden Zeilenbezug im ganzen Arbeitsbuch um, auch auf anderen Blättern und in benannten Bereichen. Aus `=D5*2` wird `=D2*2`, aus `=SUM(D5:D7)` wird `=SUM(D2:D4)`. Zeigt eine Formel, die bleibt, auf eine Zeile, die entfällt, bricht der Befehl mit Exit-Code 3 ab und schreibt nichts.
+In Claude Skills für Excel löscht `excel-bereinigen` Zeilen nur in einer Kopie und schreibt dabei alle Bezüge im Arbeitsbuch um.
+
+Umgeschrieben werden Formeln auf allen Blättern, benannte Bereiche der Mappe und einzelner Blätter, der Druckbereich, intelligente Tabellen, Autofilter, Matrixformeln und Hyperlinks. Aus `=D5*2` wird `=D2*2`, aus `=SUM(D5:D7)` wird `=SUM(D2:D4)`. Mit Exit-Code 3 bricht der Befehl ab und schreibt nichts, wenn eine Formel, die bleibt, auf eine Zeile zeigt, die entfällt, wenn die Kopfzeile einer intelligenten Tabelle entfallen würde oder wenn eine Datentabelle der Was-wäre-wenn-Analyse betroffen ist. Datenüberprüfung und bedingte Formatierung werden nicht verschoben, das steht als Hinweis im Protokoll.
 
 <a id="csv-formate"></a>
-## CSV-Formate
+## CSV-Formate: DATEV, Semikolon, UTF-8
+
+In Claude Skills für Excel schreibt `excel-csv` genau drei CSV-Formate: `datev` für den DATEV-ASCII-Import, `excel-de` für deutsches Excel und `utf8` für Python und Datenbanken.
 
 | Format | Trennzeichen | Dezimalzeichen | Datum | Kodierung | Zeilenende | Text in Anführungszeichen |
 |---|---|---|---|---|---|---|
@@ -97,6 +115,8 @@ Zahlen haben kein Tausendertrennzeichen. Wahrheitswerte sind `WAHR` und `FALSCH`
 
 <a id="grenzen"></a>
 ## Grenzen
+
+In Claude Skills für Excel gelten für jeden Befehl dieselben Grenzen. Eine Datei darüber wird abgelehnt, es wird nichts geschrieben.
 
 | Grenze | Wert |
 |---|---|

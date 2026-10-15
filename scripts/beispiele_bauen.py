@@ -9,6 +9,7 @@ import contextlib
 import io
 import json
 import os
+import re
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -19,17 +20,17 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from excel_skills import cli  # noqa: E402
+from excel_skills.bereinigen import REGELN  # noqa: E402
 
 FIX = ROOT / "fixtures"
 DOC = ROOT / "docs" / "beispiele.md"
 README = ROOT / "README.md"
 START = "<!-- beispiele:start -->"
 ENDE = "<!-- beispiele:ende -->"
-ALLE = ("kopfzeile", "verbunden", "leerzeilen", "summen", "zahlen", "datum", "trimmen")
 
 
 def nur(*regeln: str) -> str:
-    return ",".join(r for r in ALLE if r not in regeln)
+    return ",".join(r for r in REGELN if r not in regeln)
 
 
 @dataclass
@@ -110,13 +111,13 @@ BEISPIELE = [
         lambda l: code_json(aenderungen(l, "verbunden")),
     ),
     Beispiel(
-        "Leere Zeilen und Zwischensummen aus der Liste löschen.",
+        "Leere Zeilen und Zwischensummen aus der Excel-Liste löschen.",
         ["bereinigen", "fixtures/umsatz_bericht.xlsx", "--ohne", nur("leerzeilen", "summen"), "--out", "kopie.xlsx"],
         lambda l: "Zeilen " + ", ".join(str(z["zeile"]) for z in aenderungen(l, felder=("geloeschte_zeilen",))["geloeschte_zeilen"]) + " entfernt, Formeln angepasst",
         lambda l: code_json(aenderungen(l, felder=("geloeschte_zeilen", "formeln_angepasst"))),
     ),
     Beispiel(
-        "Deutsche Zahlen 1.234,56 in echte Zahlen umwandeln.",
+        "Text in Zahl umwandeln: deutsche Zahlen 1.234,56 in Excel.",
         ["bereinigen", "fixtures/umsatz_bericht.xlsx", "--ohne", nur("zahlen"), "--out", "kopie.xlsx"],
         lambda l: f"{len(aenderungen(l, 'deutsche-zahl')['aenderungen'])} Zellen zu Zahl, `1.234` in E7 bleibt Text",
         lambda l: code_json(aenderungen(l, "deutsche-zahl", ("aenderungen", "hinweise"))),
@@ -170,7 +171,7 @@ BEISPIELE = [
         lambda l: code_json({k: l.json("report.json")[k] for k in ("neu", "geloescht", "geaendert")}),
     ),
     Beispiel(
-        "Zwölf Excel-Dateien zusammenführen, eine je Monat.",
+        "Mehrere Excel-Dateien zusammenführen, eine je Monat.",
         ["stapeln", "fixtures/monate", "--out", "kopie.xlsx"],
         lambda l: f"{l.erg['dateien']} Dateien, {l.erg['zeilen_gesamt']} Zeilen, {l.erg['uebersprungen']} Summenzeile übersprungen",
         lambda l: code_json({k: l.json("kopie.aenderungen.json")[k] for k in ("spalten", "quellen", "uebersprungen")}),
@@ -182,7 +183,7 @@ BEISPIELE = [
         lambda l: code_json(l.erg),
     ),
     Beispiel(
-        "Excel als CSV für den DATEV-Import exportieren.",
+        "Excel in CSV umwandeln für den DATEV-Import.",
         ["csv", "fixtures/buchungen.xlsx", "--format", "datev", "--out", "kopie.csv"],
         lambda l: "Semikolon, Komma, `TT.MM.JJJJ`, Windows-1252, Text in Anführungszeichen",
         lambda l: code_text(l.text("kopie.csv", "cp1252"), "csv"),
@@ -237,19 +238,16 @@ def ausfuehren(b: Beispiel, ordner: Path) -> Lauf:
 
 
 def befehl(b: Beispiel) -> str:
-    teile = []
-    for a in b.args:
-        teile.append(a if a.replace("-", "").replace(".", "").replace("/", "").replace("_", "").replace(",", "").isalnum() else f'"{a}"')
-    return "excel-skills " + " ".join(teile)
+    return "excel-skills " + " ".join(a if re.fullmatch(r"[\w./,-]+", a) else f'"{a}"' for a in b.args)
 
 
 def bauen() -> tuple[str, str]:
     doc = [
-        "# 20 Beispiele: Claude Skills für Excel",
+        "# Claude Skills für Excel: 20 Beispiele mit echter Ausgabe",
         "",
         "Jedes Beispiel ist ein Satz, wie man ihn Claude Code, Codex oder einem anderen Agenten schreibt. Darunter steht der Befehl, den das Skill ausführt, und die echte Ausgabe gegen die Testdateien in `fixtures/`. Diese Datei erzeugt `python3 scripts/beispiele_bauen.py`, ein Test prüft, dass sie aktuell ist.",
         "",
-        "Vor jedem Befehl steht im Skill `uvx --from git+https://github.com/pexon-consulting/excel-skills@v0.1.0`.",
+        "Vor jedem Befehl steht im Skill `uvx --from git+https://github.com/pexon-consulting/excel-skills@v0.1.1`.",
         "",
     ]
     tabelle = ["| # | Das schreibst du dem Agenten | Befehl | Ergebnis |", "|---|---|---|---|"]

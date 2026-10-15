@@ -12,19 +12,9 @@ from openpyxl.worksheet.worksheet import Worksheet
 from . import bericht, laden, regeln
 
 
-def hinweise_zelle(wert: Any, ref: str) -> dict[str, Any] | None:
-    if not isinstance(wert, str) or wert.startswith("="):
-        return None
-    if regeln.deutsche_zahl(wert).mehrdeutig:
-        return {"zelle": ref, "regel": "deutsche-zahl", "wert": wert, "hinweis": "ohne Komma mehrdeutig, bleibt Text"}
-    if regeln.ist_us_datum(wert):
-        return {"zelle": ref, "regel": "datum", "wert": wert, "hinweis": "Datum mit Schrägstrich, Reihenfolge Tag und Monat unklar, bleibt Text"}
-    return None
-
-
 def blatt_profil(ws: Worksheet) -> dict[str, Any]:
-    r = laden.raster(ws)
-    t = laden.tabelle(ws)
+    r = laden.lese_raster(ws)
+    t = laden.tabelle(ws, raster=r)
     verbunden = sorted((str(m) for m in ws.merged_cells.ranges), key=lambda s: (len(s), s))
     erg: dict[str, Any] = {
         "blatt": ws.title,
@@ -61,7 +51,7 @@ def blatt_profil(ws: Worksheet) -> dict[str, Any]:
                 continue
             w, f = r.zeilen[nr - 1][spalte - 1]
             typen[regeln.zelltyp(w, f)] += 1
-            h = hinweise_zelle(w, f"{get_column_letter(spalte)}{nr}")
+            h = regeln.hinweis(w, f"{get_column_letter(spalte)}{nr}")
             if h:
                 erg["hinweise"].append(h)
         gefuellt = sum(n for k, n in typen.items() if k != "leer")

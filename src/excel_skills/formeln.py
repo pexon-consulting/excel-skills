@@ -99,8 +99,7 @@ def blatt_formeln(ws: Worksheet, werte_ws: Worksheet) -> dict[str, Any]:
 
 
 def ausfuehren(datei: Path, out: Path) -> dict[str, Any]:
-    wb = laden.lade(datei)
-    wv = laden.lade(datei, werte=True)
+    wb, wv = laden.lade_beide(datei)
     blaetter = [blatt_formeln(ws, wv[ws.title]) for ws in wb.worksheets]
     ziele = externe_ziele(wb)
     daten = {"befehl": "formeln", "datei": datei.name, "externe_dateien": ziele, "blaetter": blaetter}

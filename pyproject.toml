@@ -1,16 +1,17 @@
 [project]
 name = "excel-skills"
-version = "0.1.0"
-description = "Claude Skills für Excel: deutsche Excel-Dateien prüfen, bereinigen, vergleichen, zusammenführen und als DATEV-CSV exportieren, lokal und ohne das Original zu ändern."
+version = "0.1.1"
+description = "Claude Skills für Excel: deutsche Excel-Dateien prüfen und bereinigen, zwei Excel-Tabellen vergleichen, mehrere Excel-Dateien zusammenführen und in CSV für DATEV umwandeln, lokal und ohne das Original zu ändern."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
-authors = [{ name = "Phillip Pham" }]
-keywords = ["claude-skills", "agent-skills", "excel", "xlsx", "datev", "csv", "openpyxl", "codex"]
+authors = [{ name = "Pexon Consulting GmbH" }, { name = "Phillip Pham" }]
+keywords = ["claude-skills", "claude-code-skills", "agent-skills", "codex-skills", "excel", "xlsx", "excel-compare", "excel-merge", "data-cleaning", "datev", "csv", "sverweis", "openpyxl"]
 dependencies = ["openpyxl>=3.1,<4"]
 
 [project.urls]
-Homepage = "https://pexon-consulting.de/data-services/"
+Homepage = "https://pexon-consulting.de/data-services/excel-risiken-audit-controlling/"
+Changelog = "https://github.com/pexon-consulting/excel-skills/blob/main/CHANGELOG.md"
 Repository = "https://github.com/pexon-consulting/excel-skills"
 
 [project.scripts]

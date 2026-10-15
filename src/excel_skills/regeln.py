@@ -13,7 +13,8 @@ FORMELSPALTE_ANTEIL = 0.8
 FORMELSPALTE_MIN = 2
 SPALTENTYP_ANTEIL = 0.8
 FORMULAR_MAX_SPALTEN = 3
-SUMMEN_WOERTER = ("zwischensumme", "summe", "gesamt", "total")
+SUMMEN_WOERTER = ("zwischensumme", "gesamtsumme", "summe", "gesamt", "total")
+LEER = "\u00a0\u2009\u202f "
 
 FEHLERWERTE = {
     "#REF!": "#BEZUG!",
@@ -55,14 +56,17 @@ CSV_FORMATE = {
     },
 }
 
-_LEER = "\u00a0\u2009\u202f "
 _ZAHL_PUNKT = re.compile(r"^-?\d{1,3}(?:\.\d{3})+,\d+$")
-_ZAHL_LEER = re.compile(r"^-?\d{1,3}(?:[ \u00a0\u2009\u202f]\d{3})+,\d+$")
+_ZAHL_LEERZEICHEN = re.compile(r"^-?\d{1,3}(?:[ \u00a0\u2009\u202f]\d{3})+,\d+$")
 _ZAHL_KOMMA = re.compile(r"^-?\d+,\d+$")
 _ZAHL_MEHRDEUTIG = re.compile(r"^-?\d{1,3}(?:\.\d{3})+$")
 _DATUM_DE = re.compile(r"^(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})$")
 _DATUM_US = re.compile(r"^\d{1,2}/\d{1,2}/(?:\d{4}|\d{2})$")
-_SUMME = re.compile(r"^\s*(?:" + "|".join(SUMMEN_WOERTER) + ")", re.IGNORECASE)
+_SUMME = re.compile(r"^\s*(?:" + "|".join(SUMMEN_WOERTER) + r")\b", re.IGNORECASE)
+
+
+def ist_leer(wert: Any) -> bool:
+    return wert is None or (isinstance(wert, str) and not wert.strip(LEER))
 
 
 @dataclass(frozen=True)
@@ -73,8 +77,8 @@ class Zahl:
 
 def deutsche_zahl(text: str) -> Zahl:
     """#deutsche-zahl: 1.234,56 und 1 234,56 werden Zahl, 1.234 bleibt Text."""
-    s = text.strip(_LEER)
-    if _ZAHL_PUNKT.match(s) or _ZAHL_LEER.match(s) or _ZAHL_KOMMA.match(s):
+    s = text.strip(LEER)
+    if _ZAHL_PUNKT.match(s) or _ZAHL_LEERZEICHEN.match(s) or _ZAHL_KOMMA.match(s):
         roh = re.sub(r"[.\u00a0\u2009\u202f ]", "", s).replace(",", ".")
         return Zahl(float(roh))
     if _ZAHL_MEHRDEUTIG.match(s):
@@ -84,7 +88,7 @@ def deutsche_zahl(text: str) -> Zahl:
 
 def deutsches_datum(text: str) -> dt.datetime | None:
     """#datum: 31.12.2026 und 31.12.26 werden Datum. Zweistellig: 00-29 ist 20xx, 30-99 ist 19xx."""
-    m = _DATUM_DE.match(text.strip(_LEER))
+    m = _DATUM_DE.match(text.strip(LEER))
     if not m:
         return None
     tag, monat, jahr = int(m.group(1)), int(m.group(2)), int(m.group(3))
@@ -97,7 +101,18 @@ def deutsches_datum(text: str) -> dt.datetime | None:
 
 
 def ist_us_datum(text: str) -> bool:
-    return bool(_DATUM_US.match(text.strip(_LEER)))
+    return bool(_DATUM_US.match(text.strip(LEER)))
+
+
+def hinweis(wert: Any, ref: str) -> dict[str, Any] | None:
+    """Werte, die bewusst Text bleiben und deshalb im Bericht stehen."""
+    if not isinstance(wert, str) or wert.startswith("="):
+        return None
+    if deutsche_zahl(wert).mehrdeutig:
+        return {"zelle": ref, "regel": "deutsche-zahl", "wert": wert, "hinweis": "ohne Komma mehrdeutig, bleibt Text"}
+    if ist_us_datum(wert):
+        return {"zelle": ref, "regel": "datum", "wert": wert, "hinweis": "Datum mit Schrägstrich, Reihenfolge Tag und Monat unklar, bleibt Text"}
+    return None
 
 
 def ist_summenzeile(werte: list[Any]) -> bool:
@@ -112,7 +127,7 @@ def zelltyp(wert: Any, formel: bool = False) -> str:
     """Typ einer Zelle für Kopfzeile und Spaltenprofil."""
     if formel:
         return "formel"
-    if wert is None or (isinstance(wert, str) and not wert.strip(_LEER)):
+    if ist_leer(wert):
         return "leer"
     if isinstance(wert, bool):
         return "wahrheitswert"

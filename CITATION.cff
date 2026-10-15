@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "Wenn du Claude Skills für Excel nutzt oder zitierst, nenne bitte dieses Repository."
+title: "Claude Skills für Excel"
+abstract: "Claude Skills für Excel: sechs Agent Skills für Claude Code und Codex, die deutsche Excel-Dateien prüfen und bereinigen, zwei Excel-Tabellen vergleichen, mehrere Excel-Dateien zusammenführen und in CSV für DATEV umwandeln, lokal und ohne das Original zu ändern."
+type: software
+authors:
+  - name: "Pexon Consulting GmbH"
+  - family-names: "Pham"
+    given-names: "Phillip"
+repository-code: "https://github.com/pexon-consulting/excel-skills"
+url: "https://pexon-consulting.de/data-services/excel-risiken-audit-controlling/"
+license: MIT
+version: 0.1.1
+date-released: 2026-10-15
+keywords:
+  - claude-skills
+  - agent-skills
+  - excel
+  - datev
+  - csv
